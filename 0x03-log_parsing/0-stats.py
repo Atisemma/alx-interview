@@ -1,38 +1,47 @@
 #!/usr/bin/python3
 import sys
+import re
+from collections import defaultdict
 
 
 def print_stats(total_size, status_codes):
     print(f"File size: {total_size}")
-    for code in sorted(status_codes.keys()):
-        if status_codes[code] > 0:
+    for code in sorted(status_codes):
+        if status_codes[code]:
             print(f"{code}: {status_codes[code]}")
 
 
-total_size = 0
-status_codes = {200: 0, 301: 0, 400: 0, 401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
-line_count = 0
+def parse_line(line):
+    pattern = r'^\S+ - \[.+\] "GET /projects/260 HTTP/1.1" (\d+) (\d+)$'
+    match = re.match(pattern, line)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return None, None
 
-try:
-    for line in sys.stdin:
-        line_count += 1
 
-        try:
-            parts = line.split()
-            size = int(parts[-1])
-            status = int(parts[-2])
+def main():
+    total_size = 0
+    status_codes = defaultdict(int)
+    line_count = 0
 
-            total_size += size
-            if status in status_codes:
+    try:
+        for line in sys.stdin:
+            line_count += 1
+            status, size = parse_line(line.strip())
+
+            if status and size:
+                total_size += size
                 status_codes[status] += 1
-        except (ValueError, IndexError):
-            pass
 
-        if line_count % 10 == 0:
-            print_stats(total_size, status_codes)
+            if line_count % 10 == 0:
+                print_stats(total_size, status_codes)
 
-except KeyboardInterrupt:
+    except KeyboardInterrupt:
+        print_stats(total_size, status_codes)
+        sys.exit(0)
+
     print_stats(total_size, status_codes)
-    raise
 
-print_stats(total_size, status_codes)
+
+if __name__ == "__main__":
+    main()
