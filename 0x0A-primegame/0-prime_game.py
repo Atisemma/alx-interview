@@ -1,37 +1,85 @@
 #!/usr/bin/python3
-""" Prime Game Problem
-    Topic: Eratosthenes algorithm
 """
+Prime Game Module
+"""
+
+
+def is_prime(n):
+    """
+    Determine if a number is prime
+    Args:
+        n: number to check
+    Returns:
+        True if n is prime, False otherwise
+    """
+    if n < 2:
+        return False
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+
+def get_primes_up_to(n):
+    """
+    Get all prime numbers up to n using Sieve of Eratosthenes
+    Args:
+        n: upper limit
+    Returns:
+        List of prime numbers up to n
+    """
+    if n < 2:
+        return []
+    # Initialize sieve array
+    sieve = [True] * (n + 1)
+    sieve[0] = sieve[1] = False
+
+    # Mark non-prime numbers in sieve
+    for i in range(2, int(n ** 0.5) + 1):
+        if sieve[i]:
+            for j in range(i * i, n + 1, i):
+                sieve[j] = False
+
+    # Collect prime numbers
+    primes = [i for i in range(2, n + 1) if sieve[i]]
+    return primes
 
 
 def isWinner(x, nums):
     """
-    Determines the winner in the prime game using
-    Eratosthenes prime sieving algorithm
+    Determine winner of Prime Game
+    Args:
+        x: number of rounds
+        nums: array of n for each round
+    Returns:
+        Name of winner (Maria/Ben) or None if cannot be determined
     """
-    Ben = 0
-    Maria = 0
-
-    for round in range(x):
-        playing_numbers = [num for num in range(2, nums[round] + 1)]
-        index = 0
-        # Sieve prime numbers per round
-        while (index < len(playing_numbers)):
-            current_prime = playing_numbers[index]
-            sieve_index = index + current_prime
-            while(sieve_index < len(playing_numbers)):
-                playing_numbers.pop(sieve_index)
-                sieve_index += current_prime - 1
-            index += 1
-        # Determine winner - if number of primes is even player 1 wins
-        # else player 2 wins. Player 2  also wins if there is only one
-        # number to pick from
-        prime_count = (len(playing_numbers))
-        if prime_count and prime_count % 2:
-            Maria += 1
-        else:
-            Ben += 1
-
-    if Ben == Maria:
+    if not nums or x < 1:
         return None
-    return 'Ben' if Ben > Maria else 'Maria'
+
+    maria_wins = 0
+    ben_wins = 0
+
+    # Play each round
+    for n in nums:
+        if n < 2:
+            ben_wins += 1
+            continue
+
+        # Get prime numbers up to n
+        primes = get_primes_up_to(n)
+
+        # If number of prime numbers is even, Ben wins
+        # If odd, Maria wins
+        if len(primes) % 2 == 0:
+            ben_wins += 1
+        else:
+            maria_wins += 1
+
+    # Determine overall winner
+    if maria_wins > ben_wins:
+        return "Maria"
+    elif ben_wins > maria_wins:
+        return "Ben"
+    else:
+        return None
